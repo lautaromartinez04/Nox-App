@@ -4,10 +4,23 @@ import { Navbar } from './components/navbar/Navbar';
 import { Login } from './components/login/Login';
 
 import { Inicio } from './components/routers/inicio/Inicio';
+
+
 import { Productos } from './components/routers/productos/Productos';
+import { ProductoItem } from './components/routers/productos/ProductoItem';
+
 import { Ventas } from './components/routers/ventas/Ventas';
+import { VentasItem } from './components/routers/ventas/VentasItem';
+
 import { Clientes } from './components/routers/clientes/Clientes';
+import { ClientesItem } from './components/routers/clientes/ClientesItem';
+
 import { Categorias } from './components/routers/categorias/Categorias';
+import { CategoriaItem } from './components/routers/categorias/CategoriaItem';
+
+import { Devoluciones } from './components/routers/devoluciones/Devoluciones';
+import { NuevaDevolucion } from './components/routers/devoluciones/NuevaDevolucion';
+import { DevolucionItem } from './components/routers/devoluciones/DevolucionItem';
 
 import Logo from './media/images/login/Logo.png'; // Cambiá la ruta según corresponda
 
@@ -42,10 +55,29 @@ export default function App() {
         <div className="mt-16 p-4">
           <Routes>
             <Route path="/" element={<Inicio />} />
+
             <Route path="/productos" element={<Productos />} />
+            <Route path="/productos/:id" element={<ProductoItem />} />
+
             <Route path="/ventas" element={<Ventas />} />
+            <Route path="/ventas/:id" element={<VentasItem />} />
+
             <Route path="/clientes" element={<Clientes />} />
+            <Route path="/clientes/:id" element={<ClientesItem />} />
+
             <Route path="/categorias" element={<Categorias />} />
+            <Route path="/categorias/:id" element={<CategoriaItem />} />
+
+            <Route path="/devoluciones" element={<Devoluciones />} />
+
+            {/* Formulario de devolución: primero lista, luego formulario con ventaId */}
+            <Route path="/devoluciones/nueva" element={<NuevaDevolucion />} />
+            <Route path="/devoluciones/nueva/:ventaId" element={<NuevaDevolucion />} />
+
+            {/* Ver una devolución existente */}
+            <Route path="/devoluciones/:id" element={<DevolucionItem />} />
+
+
           </Routes>
         </div>
       </div>

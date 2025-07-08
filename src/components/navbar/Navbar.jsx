@@ -8,6 +8,7 @@ import {
   faCashRegister,
   faUser,
   faTags,
+  faReceipt,
 } from "@fortawesome/free-solid-svg-icons";
 
 export const Navbar = () => {
@@ -94,6 +95,21 @@ export const Navbar = () => {
           </span>
           <span className="whitespace-nowrap opacity-0 translate-x-[-8px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 ease-in-out">
             Categorías
+          </span>
+        </NavLink>
+
+        <NavLink
+          to="/devoluciones"
+          className={({ isActive }) =>
+            `flex items-center gap-3 p-2 rounded transition-all duration-200 ${isActive ? "bg-[#3f5be0]" : "hover:bg-[#3f5be0]"
+            }`
+          }
+        >
+          <span className="w-6 h-6 min-w-[2rem] flex items-center justify-center">
+            <FontAwesomeIcon icon={faReceipt} />
+          </span>
+          <span className="whitespace-nowrap opacity-0 translate-x-[-8px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 ease-in-out">
+            Devoluciones
           </span>
         </NavLink>
       </nav>
