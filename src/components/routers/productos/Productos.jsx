@@ -82,35 +82,62 @@ export const Productos = () => {
     MySwal.fire({
       title: "Nuevo Producto",
       html: `
-        <input id="nombre" class="swal2-input" placeholder="Nombre">
-        <input id="codigo" class="swal2-input" placeholder="Código">
-        <input id="stock" type="number" class="swal2-input" placeholder="Stock">
-        <input id="precio" type="number" class="swal2-input" placeholder="Precio">`,
-      preConfirm: () => {
-        return {
-          nombre: document.getElementById("nombre").value,
-          codigo: document.getElementById("codigo").value,
-          stock_actual: Number(document.getElementById("stock").value),
-          precio_unitario: Number(document.getElementById("precio").value),
-        };
-      },
+      <input id="nombre" class="swal2-input" placeholder="Nombre">
+      <input id="codigo" class="swal2-input" placeholder="Código">
+      <input id="descripcion" class="swal2-input" placeholder="Descripción">
+      <input id="stock" type="number" class="swal2-input" placeholder="Stock">
+      <input id="precio" type="number" class="swal2-input" placeholder="Precio">
+      <input id="categoria" type="number" class="swal2-input" placeholder="Categoría ID" value="1">
+      <input id="imagen" type="file" class="swal2-file">`,
       showCancelButton: true,
       confirmButtonText: "Agregar",
+      preConfirm: () => {
+        const nombre = document.getElementById("nombre").value;
+        const codigo = document.getElementById("codigo").value;
+        const descripcion = document.getElementById("descripcion").value;
+        const stock = document.getElementById("stock").value;
+        const precio = document.getElementById("precio").value;
+        const categoria = document.getElementById("categoria").value;
+        const imagen = document.getElementById("imagen").files[0];
+
+        if (!nombre || !codigo || !precio || !imagen) {
+          Swal.showValidationMessage("Faltan campos obligatorios o imagen");
+          return false;
+        }
+
+        const formData = new FormData();
+        formData.append("nombre", nombre);
+        formData.append("codigo", codigo);
+        formData.append("descripcion", descripcion);
+        formData.append("stock_actual", stock);
+        formData.append("precio_unitario", precio);
+        formData.append("categoria_id", categoria);
+        formData.append("activo", true);
+        formData.append("file", imagen);
+
+        return formData;
+      }
     }).then(result => {
-      if (!result.isConfirmed) return;
-      const nuevo = result.value;
+      if (!result.isConfirmed || !result.value) return;
+
       fetch(`${API_URL}/productos`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ ...nuevo, descripcion: "", categoria_id: 1, activo: true }),
+        body: result.value,
       })
         .then(res => res.json())
-        .then(nuevoProducto => setProductos(prev => [...prev, nuevoProducto]));
+        .then(nuevoProducto => {
+          setProductos(prev => [...prev, nuevoProducto]);
+        })
+        .catch(err => {
+          console.error("Error al crear producto:", err);
+          Swal.fire("Error", "No se pudo agregar el producto", "error");
+        });
     });
   };
+
 
   return (
     <div className="p-4">
@@ -138,7 +165,9 @@ export const Productos = () => {
             <h3 className="text-sm font-semibold text-gray-800">{p.nombre}</h3>
             <p className="text-xs text-gray-600">Código: {p.codigo}</p>
             <p className="text-xs text-gray-600">Stock: {p.stock_actual}</p>
-            <p className="text-xs text-gray-600 mb-1">Precio: ${p.precio_unitario.toFixed(2)}</p>
+            <p className="text-xs text-gray-600 mb-1">
+              Precio: ${p.precio_unitario ? p.precio_unitario.toFixed(2) : "0.00"}
+            </p>
 
             <div className="absolute top-2 right-2">
               <button
