@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPlus } from "@fortawesome/free-solid-svg-icons";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -28,8 +30,9 @@ export const Devoluciones = () => {
         <h1 className="text-2xl text-lexend-extrabold text-[#5170FF]">Devoluciones</h1>
         <button
           onClick={() => navigate('/devoluciones/nueva')}
-          className="px-4 py-2 bg-[#5170FF] text-white rounded hover:bg-opacity-90 transition"
+          className="px-4 py-2 bg-[#5170FF] text-white rounded hover:bg-opacity-90 transition text-lexend-medium"
         >
+          <FontAwesomeIcon icon={faPlus} className='pr-2' />
           Nueva Devolución
         </button>
       </div>

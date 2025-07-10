@@ -91,9 +91,9 @@ export const Categorias = () => {
   return (
     <div className="p-6 overflow-x-auto">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold text-lexend-medium text-[#5170FF]">Productos</h2>
+        <h2 className="text-xl font-bold text-lexend-medium text-[#5170FF]">Categorias</h2>
         <button
-          onClick={() => navigate("/productos/nuevo")}
+          onClick={() => navigate("/categorias/nuevo")}
           className="flex items-center gap-2 bg-[#5170FF] text-white px-4 py-2 rounded-md hover:bg-[#3f5be0] transition text-lexend-medium"
         >
           <FontAwesomeIcon icon={faPlus} /> Agregar

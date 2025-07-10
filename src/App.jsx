@@ -23,6 +23,7 @@ import { NuevaDevolucion } from './components/routers/devoluciones/NuevaDevoluci
 import { DevolucionItem } from './components/routers/devoluciones/DevolucionItem';
 
 import Logo from './media/images/login/Logo.png'; // Cambiá la ruta según corresponda
+import { Pos } from './components/routers/POS/Pos';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -54,7 +55,9 @@ export default function App() {
         {/* Contenido */}
         <div className="mt-16 p-4">
           <Routes>
-            <Route path="/" element={<Inicio />} />
+            <Route path='/' element={<Pos/>}/>
+
+            <Route path="/inicio" element={<Inicio />} />
 
             <Route path="/productos" element={<Productos />} />
             <Route path="/productos/:id" element={<ProductoItem />} />
@@ -75,7 +78,7 @@ export default function App() {
             <Route path="/devoluciones/nueva/:ventaId" element={<NuevaDevolucion />} />
 
             {/* Ver una devolución existente */}
-            <Route path="/devoluciones/:id" element={<DevolucionItem />} />
+            <Route path="/devoluciones/ver/:id" element={<DevolucionItem />} />
 
 
           </Routes>

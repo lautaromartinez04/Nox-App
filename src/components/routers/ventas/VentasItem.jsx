@@ -16,7 +16,7 @@ export const VentasItem = () => {
   const [detalles, setDetalles] = useState([]);
   const [cliente, setCliente] = useState(null);
   const [usuario, setUsuario] = useState(null);
-  const [productosMap, setProductosMap] = useState({}); 
+  const [productosMap, setProductosMap] = useState({});
   const [devoluciones, setDevoluciones] = useState([]);
 
   // 1) Cargar la venta y sus detalles
@@ -42,7 +42,6 @@ export const VentasItem = () => {
   // 2) Cargar cliente y usuario cuando tengamos la venta
   useEffect(() => {
     if (!venta) return;
-
     fetch(`${API_URL}/clientes/${venta.cliente_id}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -58,7 +57,7 @@ export const VentasItem = () => {
       .catch(console.error);
   }, [venta, token]);
 
-  // 3) Por cada detalle, cargar el nombre del producto si aún no lo tenemos
+  // 3) Cargar el nombre de cada producto de la venta
   useEffect(() => {
     detalles.forEach(({ producto_id }) => {
       if (!productosMap[producto_id]) {
@@ -84,7 +83,6 @@ export const VentasItem = () => {
         return res.json();
       })
       .then(data => {
-        // filtrar solo las devoluciones de esta venta
         const relacionadas = data.filter(d => d.venta_id === Number(id));
         setDevoluciones(relacionadas);
       })
@@ -120,21 +118,30 @@ export const VentasItem = () => {
         <p><strong>Descuento:</strong> {venta.descuento}%</p>
       </div>
 
-      {/* Nuevas devoluciones */}
+      {/* Sección Devoluciones */}
       <div className="mb-6">
         <h3 className="text-xl font-extrabold text-[#5170FF] mb-2">Devoluciones</h3>
         {devoluciones.length > 0 ? (
           <ul className="list-disc list-inside">
-            {devoluciones.map(d => (
-              <li key={d.id}>
-                <button
-                  onClick={() => navigate(`/devoluciones/${d.id}`)}
-                  className="text-[#5170FF] hover:underline"
-                >
-                  Devolución #{d.id} — {new Date(d.fecha).toLocaleDateString()}
-                </button>
-              </li>
-            ))}
+            {devoluciones.map(d => {
+              // Construir texto de ítems devueltos
+              const itemsText = d.detalles
+                .map(det => {
+                  const nombre = productosMap[det.producto_id] || `#${det.producto_id}`;
+                  return `${det.cantidad}× ${nombre}`;
+                })
+                .join(", ");
+              return (
+                <ul key={d.id}>
+                  <button
+                    onClick={() => navigate(`/devoluciones/ver/${d.id}`)}
+                    className="text-[#5170FF] hover:underline text-lexend-light"
+                  >
+                    {itemsText} — {new Date(d.fecha).toLocaleDateString()}
+                  </button>
+                </ul>
+              );
+            })}
           </ul>
         ) : (
           <p className="text-gray-600">No hay devoluciones para esta venta.</p>

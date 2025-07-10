@@ -1,3 +1,5 @@
+// src/components/routers/ventas/ProductoItem.jsx
+
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -5,7 +7,9 @@ import Swal from "sweetalert2";
 const API_URL = import.meta.env.VITE_API_URL;
 
 export const ProductoItem = () => {
-  const { id } = useParams(); // "nuevo" o un ID
+  const { id } = useParams();                // "nuevo" o un ID existente
+  const isNew = id === "nuevo";
+  const [isEditing, setIsEditing] = useState(isNew);
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
@@ -19,33 +23,37 @@ export const ProductoItem = () => {
     categoria_id: 1,
     activo: true,
     file: null,
+    image_url: null
   });
 
-  useEffect(() => {
-    if (id && id !== "nuevo") {
-      fetch(`${API_URL}/productos/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((res) => res.json())
-        .then((data) => setForm({ ...data, file: null }))
-        .catch(console.error);
-    }
-  }, [id]);
-
+  // Carga inicial de categorías y, si no es nuevo, del producto
   useEffect(() => {
     fetch(`${API_URL}/categorias`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => res.json())
+      .then(res => res.json())
       .then(setCategorias)
       .catch(console.error);
-  }, []);
+
+    if (!isNew) {
+      fetch(`${API_URL}/productos/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then(res => res.json())
+        .then(data => setForm({ ...data, file: null }))
+        .catch(console.error);
+    }
+  }, [id, isNew, token]);
 
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
-    if (type === "checkbox") setForm({ ...form, [name]: checked });
-    else if (type === "file") setForm({ ...form, file: files[0] });
-    else setForm({ ...form, [name]: value });
+    if (type === "checkbox") {
+      setForm(f => ({ ...f, [name]: checked }));
+    } else if (type === "file") {
+      setForm(f => ({ ...f, file: files[0] }));
+    } else {
+      setForm(f => ({ ...f, [name]: value }));
+    }
   };
 
   const showAlert = (title, text, icon = "success") => {
@@ -68,77 +76,121 @@ export const ProductoItem = () => {
   const handleSubmit = async () => {
     try {
       const formData = new FormData();
-      // siempre FormData para PUT y POST
       Object.entries(form).forEach(([key, val]) => {
         if (key === "file" && val) formData.append("file", val);
         else if (key !== "file") formData.append(key, val);
       });
 
-      const method = id === "nuevo" ? "POST" : "PUT";
-      const url = id === "nuevo" ? `${API_URL}/productos` : `${API_URL}/productos/${id}`;
+      const method = isNew ? "POST" : "PUT";
+      const url = isNew
+        ? `${API_URL}/productos`
+        : `${API_URL}/productos/${id}`;
+
       const res = await fetch(url, {
         method,
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
-
-      if (!res.ok) throw new Error(
-        id === "nuevo" ? "Error al crear producto" : "Error al actualizar producto"
-      );
+      if (!res.ok) {
+        throw new Error(isNew
+          ? "Error al crear producto"
+          : "Error al actualizar producto"
+        );
+      }
 
       showAlert(
-        id === "nuevo" ? "Producto creado" : "Producto actualizado",
-        id === "nuevo"
+        isNew ? "Producto creado" : "Producto actualizado",
+        isNew
           ? "El producto se creó correctamente."
           : "Los cambios se guardaron con éxito."
       );
 
-      navigate("/productos");
+      if (isNew) {
+        navigate("/productos");
+      } else {
+        setIsEditing(false);
+      }
     } catch (err) {
       console.error(err);
       showAlert("Error", err.message || "Ocurrió un error", "error");
     }
   };
 
-  return (
-    <div className="w-full px-6 py-4">
-      <h2 className="text-2xl font-bold mb-6 text-[#5170FF]">
-        {id === "nuevo" ? "Nuevo Producto" : "Editar Producto"}
-      </h2>
+  // Estilos compartidos para el contenedor
+  const containerClasses = "w-full px-6 py-4 bg-white rounded-lg shadow";
 
+  // Vista de solo lectura
+  if (!isEditing && !isNew) {
+    return (
+      <div className={containerClasses}>
+        <h2 className="text-2xl font-bold mb-4 text-[#5170FF] text-lexend-medium">{form.nombre}</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <img
+            src={form.image_url ? `${API_URL}${form.image_url}` : "https://via.placeholder.com/300x200?text=Sin+Imagen"}
+            alt={form.nombre}
+            className="col-span-1 w-full h-48 object-contain rounded"
+          />
+          <div className="col-span-1 space-y-2 text-lexend-light">
+
+            <p><strong>Código:</strong> {form.codigo}</p>
+            <p><strong>Descripción:</strong> {form.descripcion}</p>
+            <p><strong>Stock:</strong> {form.stock_actual}</p>
+            <p><strong>Precio:</strong> ${form.precio_unitario.toFixed(2)}</p>
+            <p><strong>Categoría:</strong> {categorias.find(c => c.id === form.categoria_id)?.nombre}</p>
+            <p><strong>Activo:</strong> {form.activo ? "Sí" : "No"}</p>
+          </div>
+        </div>
+
+        <div className="mt-8 flex justify-between w-full">
+          <button
+            onClick={() => navigate(-1)}
+            className="px-4 py-2 bg-gray-300 text-[#5170FF] border-2 border-[#5170FF] rounded hover:bg-[#5170FF] hover:text-white transition text-lexend-medium"
+          >
+            Volver
+          </button>
+          <button
+            onClick={() => setIsEditing(true)}
+            className="px-6 py-2 bg-[#5170FF] text-white rounded hover:bg-[#3f5be0] transition text-lexend-medium"
+          >
+            Editar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Formulario para nuevo/edición
+  return (
+    <div className={containerClasses}>
+      <h2 className="text-2xl font-bold mb-4 text-[#5170FF]">
+        {isNew ? "Nuevo Producto" : "Editar Producto"}
+      </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Nombre */}
         <div>
-          <label htmlFor="nombre" className="block text-lexend-medium text-gray-700">
-            Nombre
-          </label>
+          <label htmlFor="nombre" className="block text-lexend-medium text-gray-700">Nombre</label>
           <input
             id="nombre"
             name="nombre"
-            placeholder="Ingresá el nombre"
             value={form.nombre}
             onChange={handleChange}
             className="w-full p-2 border rounded"
           />
         </div>
-
+        {/* Código */}
         <div>
-          <label htmlFor="codigo" className="block text-lexend-medium text-gray-700">
-            Código
-          </label>
+          <label htmlFor="codigo" className="block text-lexend-medium text-gray-700">Código</label>
           <input
             id="codigo"
             name="codigo"
-            placeholder="Ingresá el código"
             value={form.codigo}
             onChange={handleChange}
             className="w-full p-2 border rounded"
           />
         </div>
-
+        {/* Descripción */}
         <div className="col-span-1 md:col-span-2">
-          <label htmlFor="descripcion" className="block text-lexend-medium text-gray-700">
-            Descripción
-          </label>
+          <label htmlFor="descripcion" className="block text-lexend-medium text-gray-700">Descripción</label>
           <textarea
             id="descripcion"
             name="descripcion"
@@ -148,11 +200,9 @@ export const ProductoItem = () => {
             className="w-full p-2 border rounded"
           />
         </div>
-
+        {/* Stock */}
         <div>
-          <label htmlFor="stock_actual" className="block text-lexend-medium text-gray-700">
-            Stock
-          </label>
+          <label htmlFor="stock_actual" className="block text-lexend-medium text-gray-700">Stock</label>
           <input
             id="stock_actual"
             name="stock_actual"
@@ -162,11 +212,9 @@ export const ProductoItem = () => {
             className="w-full p-2 border rounded"
           />
         </div>
-
+        {/* Precio unitario */}
         <div>
-          <label htmlFor="precio_unitario" className="block text-lexend-medium text-gray-700">
-            Precio Unitario
-          </label>
+          <label htmlFor="precio_unitario" className="block text-lexend-medium text-gray-700">Precio Unitario</label>
           <input
             id="precio_unitario"
             name="precio_unitario"
@@ -176,11 +224,9 @@ export const ProductoItem = () => {
             className="w-full p-2 border rounded"
           />
         </div>
-
+        {/* Categoría */}
         <div>
-          <label htmlFor="categoria_id" className="block text-lexend-medium text-gray-700">
-            Categoría
-          </label>
+          <label htmlFor="categoria_id" className="block text-lexend-medium text-gray-700">Categoría</label>
           <select
             id="categoria_id"
             name="categoria_id"
@@ -188,14 +234,12 @@ export const ProductoItem = () => {
             onChange={handleChange}
             className="w-full p-2 border rounded"
           >
-            {categorias.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.nombre}
-              </option>
+            {categorias.map(cat => (
+              <option key={cat.id} value={cat.id}>{cat.nombre}</option>
             ))}
           </select>
         </div>
-
+        {/* Activo */}
         <div className="flex items-center gap-2">
           <input
             id="activo"
@@ -205,15 +249,11 @@ export const ProductoItem = () => {
             onChange={handleChange}
             className="h-4 w-4"
           />
-          <label htmlFor="activo" className="text-lexend-medium text-gray-700">
-            Activo
-          </label>
+          <label htmlFor="activo" className="text-lexend-medium text-gray-700">Activo</label>
         </div>
-
+        {/* Imagen */}
         <div className="col-span-1 md:col-span-2">
-          <label htmlFor="file" className="block text-lexend-medium text-gray-700">
-            Imagen del producto
-          </label>
+          <label htmlFor="file" className="block text-lexend-medium text-gray-700">Imagen del producto</label>
           <input
             id="file"
             name="file"
@@ -225,19 +265,30 @@ export const ProductoItem = () => {
         </div>
       </div>
 
-      <div className="mt-6 flex justify-between">
-        <button
-          onClick={() => navigate(-1)}
-          className="px-4 py-2 bg-gray-300 text-[#5170FF] border-2 border-[#5170FF] rounded hover:bg-[#5170FF] hover:text-white transition text-lexend-medium"
-        >
-          Cancelar
-        </button>
-        <button
-          onClick={handleSubmit}
-          className="px-4 py-2 bg-[#5170FF] text-white rounded hover:bg-[#3f5be0] transition text-lexend-medium"
-        >
-          Guardar
-        </button>
+      <div className="mt-6 flex justify-end gap-2">
+        <div className="mt-8 flex justify-between w-full">
+          {!isNew ? (
+            <button
+              onClick={() => setIsEditing(false)}
+              className="px-4 py-2 bg-gray-300 text-[#5170FF] border-2 border-[#5170FF] rounded hover:bg-[#5170FF] hover:text-white transition text-lexend-medium"
+            >
+              Cancelar
+            </button>
+          ) : (
+            <button
+              onClick={() => navigate(-1)}
+              className="px-4 py-2 bg-gray-300 text-[#5170FF] border-2 border-[#5170FF] rounded hover:bg-[#5170FF] hover:text-white transition text-lexend-medium"
+            >
+              Cancelar
+            </button>
+          )}
+          <button
+            onClick={handleSubmit}
+            className="px-6 py-2 bg-[#5170FF] text-white rounded hover:bg-[#3f5be0] transition text-lexend-medium"
+          >
+            Guardar
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 import LogoBlanco from "../../media/images/login/LogoBlanco.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
+  faShoppingCart,
   faHome,
   faBox,
   faCashRegister,
@@ -22,6 +23,21 @@ export const Navbar = () => {
       <nav className="flex flex-col gap-2 p-2 text-sm font-medium text-lexend-medium">
         <NavLink
           to="/"
+          className={({ isActive }) =>
+            `flex items-center gap-3 p-2 rounded transition-all duration-200 ${isActive ? "bg-[#3f5be0]" : "hover:bg-[#3f5be0]"
+            }`
+          }
+        >
+          <span className="w-6 h-6 min-w-[2rem] flex items-center justify-center">
+            <FontAwesomeIcon icon={faShoppingCart} />
+          </span>
+          <span className="whitespace-nowrap opacity-0 translate-x-[-8px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 ease-in-out">
+            POS
+          </span>
+        </NavLink>
+
+        <NavLink
+          to="/inicio"
           className={({ isActive }) =>
             `flex items-center gap-3 p-2 rounded transition-all duration-200 ${isActive ? "bg-[#3f5be0]" : "hover:bg-[#3f5be0]"
             }`

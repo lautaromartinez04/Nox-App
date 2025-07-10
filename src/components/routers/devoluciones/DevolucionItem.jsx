@@ -49,12 +49,8 @@ export const DevolucionItem = () => {
 
   return (
     <div className="p-6 relative">
-      <button
-        onClick={() => navigate(-1)}
-        className="mb-4 px-4 py-2 bg-gray-300 text-[#5170FF] rounded hover:bg-[#5170FF] hover:text-white transition"
-      >
-        Volver
-      </button>
+
+
 
       <h2 className="text-2xl font-extrabold text-[#5170FF] mb-2">
         Devolución #{devolucion.id}
@@ -86,6 +82,12 @@ export const DevolucionItem = () => {
           ))}
         </tbody>
       </table>
+      <button
+        onClick={() => navigate(-1)}
+        className="mt-5 px-4 py-2 bg-gray-300 text-[#5170FF] border-2 border-[#5170FF] rounded hover:bg-[#5170FF] hover:text-white transition text-lexend-medium "
+      >
+        Cancelar
+      </button>
     </div>
   );
 };
