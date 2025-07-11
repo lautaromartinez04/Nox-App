@@ -114,8 +114,8 @@ export const VentasItem = () => {
         <p><strong>Fecha:</strong> {new Date(venta.fecha).toLocaleString()}</p>
         <p><strong>Cliente:</strong> {cliente ? cliente.nombre : venta.cliente_id}</p>
         <p><strong>Usuario:</strong> {usuario ? usuario.username : venta.usuario_id}</p>
-        <p><strong>Total sin descuento:</strong> ${venta.total_sin_descuento.toFixed(2)}</p>
-        <p><strong>Descuento:</strong> {venta.descuento}%</p>
+        <p><strong>Total sin descuento:</strong> ${venta.total_sin_descuento}</p>
+        <p><strong>Descuento global:</strong> %{venta.descuento}</p>
       </div>
 
       {/* Sección Devoluciones */}
@@ -155,6 +155,7 @@ export const VentasItem = () => {
             <th className="px-4 py-2 text-left">Producto</th>
             <th className="px-4 py-2 text-left">Cantidad</th>
             <th className="px-4 py-2 text-left">Precio Unit.</th>
+            <th className="px-4 py-2 text-left">Descuento</th>
             <th className="px-4 py-2 text-left">Subtotal</th>
           </tr>
         </thead>
@@ -164,6 +165,7 @@ export const VentasItem = () => {
               <td className="px-4 py-2">{productosMap[d.producto_id] ?? `#${d.producto_id}`}</td>
               <td className="px-4 py-2">{d.cantidad}</td>
               <td className="px-4 py-2">${d.precio_unitario.toFixed(2)}</td>
+              <td className="px-4 py-2">{d.descuento_individual}%</td>
               <td className="px-4 py-2">${d.subtotal.toFixed(2)}</td>
             </tr>
           ))}

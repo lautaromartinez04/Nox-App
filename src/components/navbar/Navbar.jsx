@@ -10,17 +10,19 @@ import {
   faUser,
   faTags,
   faReceipt,
+  faCoins,
+  faChartLine,
 } from "@fortawesome/free-solid-svg-icons";
 
 export const Navbar = () => {
   return (
-    <aside className="group flex flex-col bg-[#5170FF] text-white w-16 hover:w-48 transition-all duration-300 fixed top-0 left-0 h-screen z-40 shadow-lg">
+    <aside className="group flex flex-col bg-[#5170FF] text-white w-16 hover:w-48 transition-all duration-300 fixed top-0 left-0 h-screen z-40 shadow-lg print:hidden">
       {/* Logo cuadrado */}
-      <div className="flex items-center justify-center h-16 border-b border-[#3f5be0]">
+      <div className="flex items-center justify-center h-16 border-b border-[#3f5be0] print:hidden">
         <img src={LogoBlanco} alt="Logo Nox" className="w-7 h-7" />
       </div>
 
-      <nav className="flex flex-col gap-2 p-2 text-sm font-medium text-lexend-medium">
+      <nav className="flex flex-col gap-2 p-2 text-sm font-medium text-lexend-medium print:hidden">
         <NavLink
           to="/"
           className={({ isActive }) =>
@@ -126,6 +128,36 @@ export const Navbar = () => {
           </span>
           <span className="whitespace-nowrap opacity-0 translate-x-[-8px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 ease-in-out">
             Devoluciones
+          </span>
+        </NavLink>
+
+        <NavLink
+          to="/gastos"
+          className={({ isActive }) =>
+            `flex items-center gap-3 p-2 rounded transition-all duration-200 ${isActive ? "bg-[#3f5be0]" : "hover:bg-[#3f5be0]"
+            }`
+          }
+        >
+          <span className="w-6 h-6 min-w-[2rem] flex items-center justify-center">
+            <FontAwesomeIcon icon={faCoins} />
+          </span>
+          <span className="whitespace-nowrap opacity-0 translate-x-[-8px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 ease-in-out">
+            Gastos
+          </span>
+        </NavLink>
+
+        <NavLink
+          to="/reportes"
+          className={({ isActive }) =>
+            `flex items-center gap-3 p-2 rounded transition-all duration-200 ${isActive ? "bg-[#3f5be0]" : "hover:bg-[#3f5be0]"
+            }`
+          }
+        >
+          <span className="w-6 h-6 min-w-[2rem] flex items-center justify-center">
+            <FontAwesomeIcon icon={faChartLine} />
+          </span>
+          <span className="whitespace-nowrap opacity-0 translate-x-[-8px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 ease-in-out">
+            Reportes
           </span>
         </NavLink>
       </nav>

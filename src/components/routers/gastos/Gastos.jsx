@@ -1,52 +1,62 @@
-// src/components/routers/devoluciones/Devoluciones.jsx
+// src/components/routers/gastos/Gastos.jsx
 
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlus } from '@fortawesome/free-solid-svg-icons'
+import Swal from 'sweetalert2'
+import withReactContent from 'sweetalert2-react-content'
 
+const MySwal = withReactContent(Swal)
 const API_URL = import.meta.env.VITE_API_URL
 
-export const Devoluciones = () => {
-  const [devoluciones, setDevoluciones] = useState([])
+export const Gastos = () => {
+  const [gastos, setGastos] = useState([])
+  const [usuariosMap, setUsuariosMap] = useState({})
   const [searchTerm, setSearchTerm] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+  const [error, setError] = useState('')
 
   const navigate = useNavigate()
   const token = localStorage.getItem('token')
 
-  // Fetch devoluciones
-  const fetchDevoluciones = () => {
-    fetch(`${API_URL}/devoluciones`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => res.ok ? res.json() : Promise.reject('Error cargando devoluciones'))
-      .then(setDevoluciones)
+  // Fetch usuarios to map ID -> nombre
+  useEffect(() => {
+    fetch(`${API_URL}/usuarios`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => res.ok ? res.json() : Promise.reject('Error cargando usuarios'))
+      .then(data => {
+        const map = {}
+        data.forEach(u => { map[u.id] = u.nombre })
+        setUsuariosMap(map)
+      })
       .catch(console.error)
+  }, [token])
+
+  // Fetch gastos
+  const fetchGastos = () => {
+    fetch(`${API_URL}/gastos`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => res.ok ? res.json() : Promise.reject('Error cargando gastos'))
+      .then(data => setGastos(data))
+      .catch(err => setError(err.message))
   }
-  useEffect(fetchDevoluciones, [token])
+  useEffect(fetchGastos, [token])
 
-  // Compute details for each devolución
-  const withDetails = devoluciones.map(d => {
-    const unidades = d.detalles.reduce((sum, det) => sum + det.cantidad, 0)
-    const totalDevuelto = d.detalles.reduce((sum, det) => sum + det.subtotal, 0)
-    return { ...d, unidades, totalDevuelto }
-  })
-
-  // Filters
-  const filtered = withDetails.filter(d => {
+  // Compute filtered list
+  const filtered = gastos.filter(g => {
     const term = searchTerm.toLowerCase()
-    const matchSearch =
-      d.id.toString().includes(term) ||
-      d.venta_id.toString().includes(term)
+    const usuario = usuariosMap[g.usuario_id] || ''
+    const matchesSearch =
+      g.id.toString().includes(term) ||
+      (g.descripcion ?? '').toLowerCase().includes(term) ||
+      usuario.toLowerCase().includes(term)
     let inRange = true
-    const fecha = new Date(d.fecha)
+    const fecha = new Date(g.fecha)
     if (dateFrom) inRange = inRange && fecha >= new Date(dateFrom)
     if (dateTo)   inRange = inRange && fecha <= new Date(dateTo)
-    return matchSearch && inRange
+    return matchesSearch && inRange
   })
 
   // Pagination
@@ -56,23 +66,22 @@ export const Devoluciones = () => {
   return (
     <div className="p-6 overflow-x-auto">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-extrabold text-[#5170FF]">Devoluciones</h1>
+        <h1 className="text-2xl font-extrabold text-[#5170FF]">Gastos</h1>
         <button
-          onClick={() => navigate('/devoluciones/nueva')}
-          className="flex items-center gap-2 px-4 py-2 bg-[#5170FF] text-white rounded hover:bg-opacity-90 transition text-lexend-medium"
+          onClick={() => navigate('/gastos/nuevo')}
+          className="flex items-center gap-2 bg-[#5170FF] text-white px-4 py-2 rounded-md hover:bg-[#3f5be0] transition text-lexend-medium"
         >
-          <FontAwesomeIcon icon={faPlus} />
-          Nueva Devolución
+          <FontAwesomeIcon icon={faPlus} /> Agregar
         </button>
       </div>
 
       {/* Filters */}
       <div className="flex flex-col md:flex-row md:items-end gap-4 mb-6">
         <div className="flex-1">
-          <label className="block text-sm">Buscar ID/Venta:</label>
+          <label className="block text-sm">Buscar ID/Descripción/Usuario:</label>
           <input
             type="text"
-            placeholder="ID de la devolución o ID de la venta"
+            placeholder="Ej: 123 o pago servicios"
             value={searchTerm}
             onChange={e => { setSearchTerm(e.target.value); setPage(1) }}
             className="mt-1 p-2 border rounded w-full"
@@ -110,29 +119,30 @@ export const Devoluciones = () => {
         </div>
       </div>
 
-      {/* Tabla de devoluciones */}
+      {error && <p className="text-red-500 mb-4">{error}</p>}
+
       <table className="min-w-full bg-white rounded-lg shadow">
         <thead>
           <tr className="bg-gray-100 border-b">
-            <th className="px-4 py-2 text-left text-lexend-medium">ID</th>
-            <th className="px-4 py-2 text-left text-lexend-medium">Venta</th>
-            <th className="px-4 py-2 text-left text-lexend-medium">Fecha</th>
-            <th className="px-4 py-2 text-left text-lexend-medium">Unidades</th>
-            <th className="px-4 py-2 text-left text-lexend-medium">Total Devuelto</th>
-            <th className="px-4 py-2 text-left text-lexend-medium">Acciones</th>
+            <th className="px-4 py-2 text-left">ID</th>
+            <th className="px-4 py-2 text-left">Fecha</th>
+            <th className="px-4 py-2 text-left">Monto</th>
+            <th className="px-4 py-2 text-left">Descripción</th>
+            <th className="px-4 py-2 text-left">Usuario</th>
+            <th className="px-4 py-2 text-left">Acciones</th>
           </tr>
         </thead>
         <tbody>
-          {paginated.map(d => (
-            <tr key={d.id} className="border-b hover:bg-gray-50">
-              <td className="px-4 py-2">{d.id}</td>
-              <td className="px-4 py-2">{d.venta_id}</td>
-              <td className="px-4 py-2">{new Date(d.fecha).toLocaleString()}</td>
-              <td className="px-4 py-2">{d.unidades}</td>
-              <td className="px-4 py-2">${d.totalDevuelto.toFixed(2)}</td>
+          {paginated.map(g => (
+            <tr key={g.id} className="border-b hover:bg-gray-50">
+              <td className="px-4 py-2">{g.id}</td>
+              <td className="px-4 py-2">{new Date(g.fecha).toLocaleString()}</td>
+              <td className="px-4 py-2">${g.monto.toFixed(2)}</td>
+              <td className="px-4 py-2">{g.descripcion || '—'}</td>
+              <td className="px-4 py-2">{usuariosMap[g.usuario_id] ?? `#${g.usuario_id}`}</td>
               <td className="px-4 py-2">
                 <button
-                  onClick={() => navigate(`/devoluciones/${d.id}`)}
+                  onClick={() => navigate(`/gastos/${g.id}`)}
                   className="text-[#5170FF] hover:underline text-lexend-medium transition"
                 >Ver</button>
               </td>

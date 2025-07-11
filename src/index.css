@@ -37,3 +37,10 @@
 .text-lexend-regular {
     font-family: "lexend regular";
 }
+
+.card { background:white; border-radius:0.5rem; box-shadow:0 1px 3px rgba(0,0,0,0.1); padding:1.5rem; display:flex; flex-direction:column; align-items:center; transition:box-shadow .2s; }
+.card:hover { box-shadow:0 4px 6px rgba(0,0,0,0.15); }
+.icon { font-size:2.5rem; color:#5170FF; margin-bottom:1rem; }
+.label { font-size:1rem; color:#718096; }
+.value { font-size:1.5rem; font-weight:600; }
+.subvalue { font-size:0.875rem; color:#E53E3E; margin-top:0.25rem; }

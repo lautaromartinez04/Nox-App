@@ -22,6 +22,12 @@ import { Devoluciones } from './components/routers/devoluciones/Devoluciones';
 import { NuevaDevolucion } from './components/routers/devoluciones/NuevaDevolucion';
 import { DevolucionItem } from './components/routers/devoluciones/DevolucionItem';
 
+import { Gastos } from './components/routers/gastos/Gastos';
+import { GastoItem } from './components/routers/gastos/GastosItem';
+
+import { Reportes } from './components/routers/reportes/Reportes';
+import { ReporteImprimible } from './components/routers/reportes/ReporteImprimible';
+
 import Logo from './media/images/login/Logo.png'; // Cambiá la ruta según corresponda
 import { Pos } from './components/routers/POS/Pos';
 
@@ -38,11 +44,13 @@ export default function App() {
   }
 
   return (
-    <div className="flex bg-[#f8f9fc]">
-      <Navbar />
+    <div className="flex print:flex-col bg-[#f8f9fc]">
+      <div className="print:hidden">
+        <Navbar />
+      </div>
       <div className="flex flex-col flex-1 ml-16">
         {/* Navbar superior */}
-        <header className="h-16 bg-white shadow px-4 flex items-center justify-between fixed top-0 left-16 right-0 z-30">
+        <header className="h-16 bg-white shadow px-4 flex items-center justify-between fixed top-0 left-16 right-0 z-30 print:hidden">
           <span className="text-[#5170FF] text-xl font-semibold text-lexend-extrabold">NOX</span>
           <button
             onClick={handleLogout}
@@ -53,9 +61,9 @@ export default function App() {
         </header>
 
         {/* Contenido */}
-        <div className="mt-16 p-4">
+        <div className="mt-16 p-4 print:w-full">
           <Routes>
-            <Route path='/' element={<Pos/>}/>
+            <Route path='/' element={<Pos />} />
 
             <Route path="/inicio" element={<Inicio />} />
 
@@ -78,8 +86,16 @@ export default function App() {
             <Route path="/devoluciones/nueva/:ventaId" element={<NuevaDevolucion />} />
 
             {/* Ver una devolución existente */}
-            <Route path="/devoluciones/ver/:id" element={<DevolucionItem />} />
+            <Route path="/devoluciones/:id" element={<DevolucionItem />} />
 
+            {/* Gastos */}
+            <Route path="/gastos" element={<Gastos />} />
+            <Route path="/gastos/nuevo" element={<GastoItem />} />
+            <Route path="/gastos/:id" element={<GastoItem />} />
+
+            {/* Reportes */}
+            <Route path="/reportes" element={<Reportes />} />
+            <Route path="/reportesimprimible" element={<ReporteImprimible />} />
 
           </Routes>
         </div>

@@ -13,7 +13,7 @@ export const Pos = () => {
 
   const [productos, setProductos] = useState([]);
   const [clientes, setClientes]   = useState([]);
-  const [cart, setCart]           = useState([]); // each item: { producto_id, nombre, precio_unitario, cantidad, descuento }
+  const [cart, setCart]           = useState([]); // { producto_id, nombre, precio_unitario, cantidad, descuento_individual }
   const [globalDesc, setGlobalDesc] = useState(0);
   const [clienteId, setClienteId] = useState(null);
   const [inputValue, setInputValue] = useState('');
@@ -21,11 +21,11 @@ export const Pos = () => {
   const [error, setError]         = useState('');
   const [loading, setLoading]     = useState(true);
 
-  // Carga inicial de productos y clientes
+  // Carga inicial
   useEffect(() => {
     Promise.all([
       fetch(`${API_URL}/productos`, { headers: { Authorization: `Bearer ${token}` } }),
-      fetch(`${API_URL}/clientes`,  { headers: { Authorization: `Bearer ${token}` } })
+      fetch(`${API_URL}/clientes`,  { headers: { Authorization: `Bearer ${token}` } }),
     ])
       .then(async ([resP, resC]) => {
         if (!resP.ok) throw new Error('Error cargando productos');
@@ -38,7 +38,7 @@ export const Pos = () => {
       .finally(() => setLoading(false));
   }, [token]);
 
-  // Añade producto al carrito o incrementa cantidad
+  // Añade o incrementa
   const addToCart = (prod, qty) => {
     setCart(prev => {
       const exists = prev.find(i => i.producto_id === prod.id);
@@ -56,7 +56,7 @@ export const Pos = () => {
           nombre: prod.nombre,
           precio_unitario: prod.precio_unitario,
           cantidad: qty,
-          descuento: 0
+          descuento_individual: 0
         }
       ];
     });
@@ -73,44 +73,48 @@ export const Pos = () => {
   };
 
   const updateDiscount = (producto_id, desc) => {
+    const clean = Math.min(Math.max(0, desc), 100);
     setCart(prev =>
       prev.map(i =>
         i.producto_id === producto_id
-          ? { ...i, descuento: Math.min(Math.max(0, desc), 100) }
+          ? { ...i, descuento_individual: clean }
           : i
       )
     );
-    // if any line discount > 0, reset global
-    if (desc > 0) setGlobalDesc(0);
+    if (clean > 0) setGlobalDesc(0);
   };
 
   const removeFromCart = producto_id => {
     setCart(prev => prev.filter(i => i.producto_id !== producto_id));
   };
 
-  // Calcula subtotales y total
+  // Subtotales
   const subtotal = cart.reduce((sum, i) => {
-    const line = i.precio_unitario * i.cantidad * (1 - i.descuento / 100);
+    const line = i.precio_unitario * i.cantidad * (1 - i.descuento_individual/100);
     return sum + line;
   }, 0);
-  const total = subtotal * (1 - globalDesc / 100);
+  const total = subtotal * (1 - globalDesc/100);
 
   const clienteOptions = clientes.map(c => ({
     value: c.id,
     label: `${c.nombre} (#${c.id})`
   }));
 
+  // Lectura de código
   const handleKeyDown = e => {
     if (e.key !== 'Enter') return;
     e.preventDefault();
     setError('');
     const text = inputValue.trim();
+
+    // Confirmación de pendiente
     if (pending && text === pending.raw) {
       addToCart(pending.producto, pending.cantidad);
       setPending(null);
       setInputValue('');
       return;
     }
+
     setPending(null);
     const m = text.match(/^(?:(\d+)[xX\*])?(.+)$/);
     if (!m) {
@@ -126,6 +130,11 @@ export const Pos = () => {
     const prod = productos.find(p => p.codigo === code);
     if (!prod) {
       setError(`No hallado código "${code}"`);
+      return;
+    }
+    // validación de stock
+    if (qty > prod.stock_actual) {
+      setError(`Solo quedan ${prod.stock_actual} unidades de "${prod.nombre}"`);
       return;
     }
     setPending({ producto: prod, cantidad: qty, raw: text });
@@ -146,11 +155,11 @@ export const Pos = () => {
         usuario_id: 1,
         descuento: globalDesc,
         detalles: cart.map(i => ({
-          producto_id:    i.producto_id,
-          cantidad:       i.cantidad,
-          precio_unitario:i.precio_unitario,
-          subtotal:       i.precio_unitario * i.cantidad * (1 - i.descuento / 100),
-          descuento:      i.descuento
+          producto_id:           i.producto_id,
+          cantidad:              i.cantidad,
+          precio_unitario:       i.precio_unitario,
+          subtotal:              i.precio_unitario * i.cantidad * (1 - i.descuento_individual/100),
+          descuento_individual:  i.descuento_individual
         }))
       };
       const res = await fetch(`${API_URL}/ventas`, {
@@ -193,9 +202,8 @@ export const Pos = () => {
 
   return (
     <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Izquierda: Escaneo, Cliente y Global Discount */}
+      {/* Izquierda */}
       <div className="bg-white rounded-lg shadow p-4 space-y-4">
-        {/* Escaneo */}
         <div>
           <h2 className="text-lg font-bold text-[#5170FF] mb-2">Escanear / Código</h2>
           <input
@@ -208,13 +216,20 @@ export const Pos = () => {
           />
           {pending && (
             <div className="p-2 bg-yellow-50 border-l-4 border-yellow-400 mt-2">
-              <p><strong>Confirmar:</strong> {pending.cantidad}× {pending.producto.nombre}</p>
+              <p>
+                <strong>Confirmar:</strong> {pending.cantidad}× {pending.producto.nombre}
+              </p>
+              {/* alerta de stock bajo */}
+              {pending.producto.stock_actual <= pending.producto.stock_bajo && (
+                <p className="text-sm text-red-600">
+                  ¡Stock bajo: quedan {pending.producto.stock_actual}!
+                </p>
+              )}
               <p className="text-sm text-gray-600">Enter para confirmar</p>
             </div>
           )}
           {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
         </div>
-        {/* Cliente + Global Discount */}
         <div className="flex gap-4">
           <div className="flex-1">
             <label className="block text-sm mb-1">Cliente</label>
@@ -234,14 +249,14 @@ export const Pos = () => {
               max="100"
               value={globalDesc}
               onChange={e => setGlobalDesc(Number(e.target.value))}
-              disabled={cart.some(i => i.descuento > 0)}
+              disabled={cart.some(i => i.descuento_individual > 0)}
               className="w-full p-2 border rounded disabled:opacity-50"
             />
           </div>
         </div>
       </div>
 
-      {/* Derecha: Carrito con per-item discount */}
+      {/* Derecha */}
       <div className="bg-white rounded-lg shadow p-4 flex flex-col">
         <h2 className="text-lg font-bold text-[#5170FF] mb-2">Carrito</h2>
         <div className="flex-1 overflow-y-auto mb-4">
@@ -260,7 +275,7 @@ export const Pos = () => {
               </thead>
               <tbody>
                 {cart.map(item => {
-                  const lineTotal = item.precio_unitario * item.cantidad * (1 - item.descuento/100);
+                  const lineTotal = item.precio_unitario * item.cantidad * (1 - item.descuento_individual/100);
                   return (
                     <tr key={item.producto_id} className="border-t">
                       <td>{item.nombre}</td>
@@ -278,7 +293,7 @@ export const Pos = () => {
                           type="number"
                           min="0"
                           max="100"
-                          value={item.descuento}
+                          value={item.descuento_individual}
                           onChange={e => updateDiscount(item.producto_id, Number(e.target.value))}
                           className="w-12 text-center border rounded px-1"
                         />
@@ -299,12 +314,8 @@ export const Pos = () => {
 
         {/* Totales */}
         <div className="mt-auto space-y-2">
-          <div className="flex justify-between">
-            <span>Subtotal:</span><span>${subtotal.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between font-bold">
-            <span>Total:</span><span>${total.toFixed(2)}</span>
-          </div>
+          <div className="flex justify-between"><span>Subtotal:</span><span>${subtotal.toFixed(2)}</span></div>
+          <div className="flex justify-between font-bold"><span>Total:</span><span>${total.toFixed(2)}</span></div>
         </div>
 
         <button
